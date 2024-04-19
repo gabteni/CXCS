@@ -1,7 +1,8 @@
 import unittest
 import numpy as np
-from skXCS.XCS import XCS
+
 from skXCS.StringEnumerator import StringEnumerator
+from skXCS.XCS import XCS
 from sklearn.model_selection import cross_val_score
 import os
 

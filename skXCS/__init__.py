@@ -29,3 +29,4 @@ from .PredictionArray import PredictionArray
 from .StringEnumerator import StringEnumerator
 from .Timer import Timer
 from .XCS import XCS
+from .Corporation import Corporation 

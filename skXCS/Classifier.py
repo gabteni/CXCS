@@ -1,6 +1,7 @@
 import random
 import copy
 import math
+import ClassifierSet
 class Classifier:
     def __init__(self,xcs):
         self.specifiedAttList = []
@@ -20,6 +21,10 @@ class Classifier:
         self.initTimeStamp = xcs.iterationCount
         self.deletionProb = None
         self.mass=0
+        self.next=None
+        self.prev=None
+        self.id=xcs.id_track
+        xcs.id_track += 1
         pass
 
     def initializeWithParentClassifier(self,classifier):
@@ -32,6 +37,8 @@ class Classifier:
         self.predictionError = classifier.predictionError
         self.fitness = classifier.fitness/classifier.numerosity
         self.mass=0
+        self.next=classifier.next
+        self.prev=classifier.prev
     def match(self,state,xcs):
         mass=0
         #dev=0
@@ -60,7 +67,15 @@ class Classifier:
         self.mass=math.sqrt(mass)
         #self.mass/=dev
         #self.mass/=len(self.condition)
-        return True
+        if self.next==None:
+            nextMatch=True
+        else:
+            nextMatch=xcs.population.getById(self.next).match(xcs.nextInstance())
+        if self.prev==None:
+            prevMatch=True
+        else:
+            prevMatch=xcs.population.getById(self.prev).match(xcs.nextInstance())
+        return True & nextMatch & prevMatch
 
     def initializeWithMatchingStateAndGivenAction(self,setSize,state,action,xcs):
         self.action = action
@@ -139,7 +154,22 @@ class Classifier:
         else:
             accuracy = xcs.alpha * ((self.predictionError / xcs.e_0) ** (-xcs.nu))
 
-        return accuracy
+        accDiv=1
+        if self.next==None:
+            pass
+        else:
+            accuracy+=xcs.population.getById(self.next).getAccuracy(xcs.nextInstance())
+            accDiv+=1
+        if self.prev==None:
+            pass
+        else:
+            accuracy+=xcs.population.getById(self.prev).match(xcs.nextInstance())
+            accDiv+=1
+
+
+
+
+        return accuracy/accDiv
 
     def updateFitness(self, accSum, accuracy,xcs):
         """ Updates the fitness of the classifier according to the relative accuracy.
@@ -267,6 +297,7 @@ class Classifier:
     def mutation(self,state,xcs):
         changedByConditionMutation = self.mutateCondition(state,xcs)
         changedByActionMutation = self.mutateAction(xcs)
+
         return changedByConditionMutation or changedByActionMutation
 
     def mutateCondition(self,state,xcs):
@@ -326,3 +357,13 @@ class Classifier:
         else:
             deletionVote = self.actionSetSize * self.numerosity * meanFitness / (self.fitness / self.numerosity)
         return deletionVote
+    def performColition(self,xcs):
+        if random.random() < 0.1:
+            if self.next==None:
+                nextState=xcs.nextInstance()
+                self.next=random.choice(xcs.population.selectTwoCorpCanidats(nextState)).id
+                xcs.population.corporationSet.collate(self.next,self.id)
+            if self.prev==None:
+                pervState=xcs.prevInstance()
+                self.prev=random.choice(xcs.population.selectTwoCorpCanidats(pervState)).id
+                xcs.population.corporationSet.collate(self.prev,self.id)

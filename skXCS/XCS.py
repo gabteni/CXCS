@@ -251,6 +251,8 @@ class XCS(BaseEstimator,ClassifierMixin):
             self.record = IterationRecord()
             self.reboot_filename = reboot_filename
 
+            self.id_track=0
+
             #Reboot Population
             if self.reboot_filename != None:
                 self.rebootPopulation()

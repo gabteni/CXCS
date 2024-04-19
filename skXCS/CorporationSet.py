@@ -2,14 +2,13 @@
 import copy
 import random
 from skXCS.Classifier import Classifier
-from skXCS.Corporation import Corporation
-class ClassifierSet:
+
+class CorporationSet:
     def __init__(self):
         self.popSet = []
         self.matchSet = []
         self.actionSet = []
         self.microPopSize = 0
-        self.corporationSet=Corporation()
 
     ####Match Set Creation####
     def createMatchSet(self,state,xcs):
@@ -134,13 +133,6 @@ class ClassifierSet:
                 i+=1
 
     def removeMacroClassifier(self, ref):
-        if self.corporationSet.corp[self.popSet[ref]]!=[]:
-            for i in self.corporationSet.corp[self.popSet[ref]]:
-                cl=self.getById(i)
-                if cl.next==self.popSet[ref].id:
-                    cl.next=None
-                if cl.prev==self.popSet[ref].id:
-                    cl.prev=None
         del self.popSet[ref]
 
     def deleteFromMatchSet(self, deleteRef):
@@ -356,63 +348,3 @@ class ClassifierSet:
                 attributeAccList[ref] += cl.numerosity * cl.getAccuracy(xcs)
         return attributeAccList
 
-    def createCorpMatchSet(self,state,xcs):
-        xcs.timer.startTimeMatching()
-        actionsNotCovered = copy.deepcopy(xcs.env.formatData.phenotypeList)
-        totalNumActions = len(xcs.env.formatData.phenotypeList)
-
-        for i in range(len(self.popSet)):
-            classifier = self.popSet[i]
-            if classifier.match(state,xcs):
-                self.corporationSet.append(i)
-                if classifier.action in actionsNotCovered:
-                    actionsNotCovered.remove(classifier.action)
-
-        if xcs.env.formatData.isBinaryClassification:
-            doCovering = totalNumActions - len(actionsNotCovered) < xcs.theta_matching or len(self.corporationSet) < 5 
-            #Second condition only holds for 1 covering round
-        else:
-            doCovering = totalNumActions - len(actionsNotCovered) < xcs.theta_matching
-
-        while doCovering:
-            if len(actionsNotCovered) != 0:
-                action = random.choice(actionsNotCovered)
-            else:
-                action = random.choice(copy.deepcopy(xcs.env.formatData.phenotypeList))
-            coveredClassifier = Classifier(xcs)
-            coveredClassifier.initializeWithMatchingStateAndGivenAction(1,state,action,xcs)
-            self.addClassifierToPopulation(xcs,coveredClassifier,True)
-            self.corporationSet.append(len(self.popSet)-1)
-            if len(actionsNotCovered) != 0:
-                actionsNotCovered.remove(action)
-            xcs.trackingObj.coveringCount += 1
-
-            doCovering = totalNumActions - len(actionsNotCovered) < xcs.theta_matching
-
-        #for ref in self.corporationSet:
-            #self.popSet[ref].matchCount += 1
-        xcs.timer.stopTimeMatching()
-
-    def selectTwoCorpCanidats(self,state):
-        self.createCorpMatchSet(state=state)
-        selectList = [None,None]
-        setList = self.corporationSet
-
-        for i in range(2):
-            tSize = int(len(setList) )#* xcs.theta_select)
-            possibleClassifiers = random.sample(setList, tSize)
-
-            bestFitness = 0
-            bestClassifier = self.actionSet[0]
-            for j in possibleClassifiers:
-                if self.popSet[j].fitness > bestFitness:
-                    bestFitness = self.popSet[j].fitness
-                    bestClassifier = j
-            selectList[i] = self.popSet[bestClassifier]
-        return selectList 
-
-    def getById(self,id):
-        for i in range(len(self.popSet)):
-            if self.popSet[i].id==id:
-                return self.popSet[i]
-            pass

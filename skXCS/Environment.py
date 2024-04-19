@@ -20,6 +20,15 @@ class Environment:
             self.currentTrainPhenotype = self.formatData.trainFormatted[1][self.dataRef]
         else:
             self.resetDataRef()
+            
+    def nextInstance(self):
+        if self.dataRef < self.formatData.numTrainInstances-1:
+            return self.formatData.trainFormatted[0][self.dataRef+1],self.formatData.trainFormatted[1][self.dataRef+1]
+        return None,None
+    def prevInstance(self):
+        if self.dataRef>0:
+            return self.formatData.trainFormatted[0][self.dataRef-1],self.formatData.trainFormatted[1][self.dataRef-1]
+        return None,None
 
     def resetDataRef(self):
         self.dataRef = 0
