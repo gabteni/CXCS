@@ -1,7 +1,7 @@
 import random
 import copy
 import math
-import ClassifierSet
+#import ClassifierSet
 class Classifier:
     def __init__(self,xcs):
         self.specifiedAttList = []
@@ -41,6 +41,10 @@ class Classifier:
         self.prev=classifier.prev
     def match(self,state,xcs):
         mass=0
+        if state is not None:
+            prevState=state.prev
+            nextState=state.next
+            state=state.data
         #dev=0
         for i in range(len(self.condition)):
             specifiedIndex = self.specifiedAttList[i]
@@ -67,17 +71,18 @@ class Classifier:
         self.mass=math.sqrt(mass)
         #self.mass/=dev
         #self.mass/=len(self.condition)
-        if self.next==None:
+        if self.next==None or xcs.population.getById(self.next) is None or nextState==None:
             nextMatch=True
         else:
-            nextMatch=xcs.population.getById(self.next).match(xcs.nextInstance())
-        if self.prev==None:
+            nextMatch=xcs.population.getById(self.next).match(nextState,xcs)
+        if self.prev==None or xcs.population.getById(self.prev) is None or prevState==None:
             prevMatch=True
         else:
-            prevMatch=xcs.population.getById(self.prev).match(xcs.nextInstance())
+            prevMatch=xcs.population.getById(self.prev).match(prevState,xcs)
         return True & nextMatch & prevMatch
 
     def initializeWithMatchingStateAndGivenAction(self,setSize,state,action,xcs):
+        state=state.data
         self.action = action
         self.actionSetSize = setSize
 
@@ -89,6 +94,7 @@ class Classifier:
 
 
     def createMatchingAttribute(self,xcs,attRef,state):
+        #state=state.data
         attributeInfoType = xcs.env.formatData.attributeInfoType[attRef]
         if attributeInfoType:
             attributeInfoValue = xcs.env.formatData.attributeInfoContinuous[attRef]
@@ -155,21 +161,27 @@ class Classifier:
             accuracy = xcs.alpha * ((self.predictionError / xcs.e_0) ** (-xcs.nu))
 
         accDiv=1
-        if self.next==None:
+        accDivIncN=0
+        accIncN=0
+        accDivIncP=0
+        accIncP=0
+        if self.next==None or xcs.population.getById(self.next) is None:
             pass
         else:
-            accuracy+=xcs.population.getById(self.next).getAccuracy(xcs.nextInstance())
-            accDiv+=1
-        if self.prev==None:
+            accIncN,accDivIncN=xcs.population.getById(self.next).getAccuracy(xcs)
+            #accuracy+=xcs.population.getById(self.next).getAccuracy(xcs)
+            #accDiv+=1
+        if self.prev==None or xcs.population.getById(self.prev) is None:
             pass
         else:
-            accuracy+=xcs.population.getById(self.prev).match(xcs.nextInstance())
-            accDiv+=1
+            accIncP,accDivIncP=xcs.population.getById(self.prev).getAccuracy(xcs)
+            #accuracy+=xcs.population.getById(self.prev).getAccuracy(xcs)
+            #accDiv+=1
 
 
 
 
-        return accuracy/accDiv
+        return accIncP+accIncN+accuracy,accDivIncP+accDivIncN+accDiv#accuracy/accDiv
 
     def updateFitness(self, accSum, accuracy,xcs):
         """ Updates the fitness of the classifier according to the relative accuracy.
@@ -295,12 +307,14 @@ class Classifier:
         return changed
 
     def mutation(self,state,xcs):
+        state=state.data
         changedByConditionMutation = self.mutateCondition(state,xcs)
         changedByActionMutation = self.mutateAction(xcs)
-
+        self.performColition(xcs)
         return changedByConditionMutation or changedByActionMutation
 
     def mutateCondition(self,state,xcs):
+        #state=state.data
         changed = False
         for attRef in range(xcs.env.formatData.numAttributes):
             attributeInfoType = xcs.env.formatData.attributeInfoType[attRef]
@@ -359,11 +373,17 @@ class Classifier:
         return deletionVote
     def performColition(self,xcs):
         if random.random() < 0.1:
-            if self.next==None:
-                nextState=xcs.nextInstance()
-                self.next=random.choice(xcs.population.selectTwoCorpCanidats(nextState)).id
-                xcs.population.corporationSet.collate(self.next,self.id)
-            if self.prev==None:
-                pervState=xcs.prevInstance()
-                self.prev=random.choice(xcs.population.selectTwoCorpCanidats(pervState)).id
-                xcs.population.corporationSet.collate(self.prev,self.id)
+            if self.next==None and random.random() < 0.75:
+                nextState=xcs.env.getTrainState().next
+                if nextState is not None:
+                    selected=random.choice(xcs.population.selectTwoCorpCanidats(nextState,xcs))
+                    #selected.prev=self.id
+                    self.next=selected.id
+                    xcs.population.corporationSet.collate(self.next,self.id)
+            if self.prev==None and random.random() < 0.75:
+                pervState=xcs.env.getTrainState().prev
+                if pervState is not None:
+                    selected=random.choice(xcs.population.selectTwoCorpCanidats(pervState,xcs))
+                    #selected.next=self.id
+                    self.prev=selected.id
+                    xcs.population.corporationSet.collate(self.prev,self.id)

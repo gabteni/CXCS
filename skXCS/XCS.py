@@ -13,6 +13,7 @@ import csv
 import copy
 import pickle
 import time
+from tqdm import tqdm
 
 class XCS(BaseEstimator,ClassifierMixin):
     def __init__(self,learning_iterations=10000,N=1000,p_general=0.5,beta=0.2,alpha=0.1,e_0=10,nu=5,theta_GA=25,p_crossover=0.8,p_mutation=0.04,
@@ -323,7 +324,7 @@ class XCS(BaseEstimator,ClassifierMixin):
         self.movingAvgCount = 50
         aveGenerality = 0
         aveGeneralityFreq = min(self.env.formatData.numTrainInstances,1000)
-
+        self.pbar = tqdm(total = self.learning_iterations+1)
         while self.iterationCount < self.learning_iterations:
             state = self.env.getTrainState()
             self.runIteration(state)
@@ -352,8 +353,10 @@ class XCS(BaseEstimator,ClassifierMixin):
 
             self.iterationCount += 1
             self.env.newInstance()
+            self.pbar.update(1)
         self.saveFinalMetrics()
         self.hasTrained = True
+        
         return self
 
     def runIteration(self,state):
@@ -397,7 +400,7 @@ class XCS(BaseEstimator,ClassifierMixin):
     def saveFinalMetrics(self):
         self.finalMetrics = [self.learning_iterations,self.timer.globalTime, self.timer.globalMatching,
                              self.timer.globalDeletion, self.timer.globalSubsumption, self.timer.globalGA,
-                             self.timer.globalEvaluation,copy.deepcopy(self.env),copy.deepcopy(self.population.popSet)]
+                             self.timer.globalEvaluation,copy.deepcopy(self.population.popSet)]#copy.deepcopy(self.env),copy.deepcopy(self.population.popSet)]
 
     def pickle_model(self,filename=None):
         if self.hasTrained:
@@ -464,13 +467,16 @@ class XCS(BaseEstimator,ClassifierMixin):
 
         numInstances = X.shape[0]
         predictionList = []
+        X=self.env.build_linked_list_from_list(X)
+        Xx=X.head
         for instance in range(numInstances):
-            state = X[instance]
+            state = Xx#X[instance]
             self.population.makeEvaluationMatchSet(state,self)
             predictionArray = PredictionArray(self.population, self)
             actionWinner = predictionArray.bestActionWinner()
             predictionList.append(actionWinner)
             self.population.clearSets()
+            Xx=Xx.next
         return np.array(predictionList)
 
     def predict_proba(self,X):

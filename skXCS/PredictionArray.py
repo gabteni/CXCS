@@ -20,6 +20,9 @@ class PredictionArray:
             self.fitnesses[cl.action] += cl.fitness
             self.masses[cl.action]+=cl.mass
             self.massCount[cl.action]+=1
+        for i in range(len(self.massCount)):
+            if self.massCount[i]==0:
+                self.massCount[i]=1
         self.masses=self.masses/self.massCount
         for eachClass in self.actionList:
             if self.fitnesses[eachClass] != 0:
