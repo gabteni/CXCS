@@ -1,7 +1,7 @@
 from setuptools import setup
 
-with open("README.md","r") as fh:
-  ld = fh.read()
+#with open("README.md","r") as fh:
+#  ld = fh.read()
 
 setup(
   name = 'scikit-XCS',
@@ -29,5 +29,5 @@ setup(
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7'
   ],
-  long_description=ld
+  long_description="jk you get a small no description"#ld
 )
