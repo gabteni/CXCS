@@ -71,14 +71,14 @@ class Classifier:
         self.mass=math.sqrt(mass)
         #self.mass/=dev
         #self.mass/=len(self.condition)
-        if self.next==None or xcs.population.getById(self.next) is None or nextState==None:
+        if self.next==None  or nextState==None :#or xcs.population.getById(self.next) is None:
             nextMatch=True
         else:
-            nextMatch=xcs.population.getById(self.next).match(nextState,xcs)
-        if self.prev==None or xcs.population.getById(self.prev) is None or prevState==None:
+            nextMatch=self.next.match(nextState,xcs)#xcs.population.getById(self.next).match(nextState,xcs)
+        if self.prev==None  or prevState==None :#or xcs.population.getById(self.prev) is None:
             prevMatch=True
         else:
-            prevMatch=xcs.population.getById(self.prev).match(prevState,xcs)
+            prevMatch=self.prev.match(prevState,xcs)#xcs.population.getById(self.prev).match(prevState,xcs)
         return True & nextMatch & prevMatch
 
     def initializeWithMatchingStateAndGivenAction(self,setSize,state,action,xcs):
@@ -165,16 +165,16 @@ class Classifier:
         accIncN=0
         accDivIncP=0
         accIncP=0
-        if self.next==None or xcs.population.getById(self.next) is None:
+        if self.next==None :#or xcs.population.getById(self.next) is None:
             pass
         else:
-            accIncN,accDivIncN=xcs.population.getById(self.next).getAccuracy(xcs)
+            accIncN,accDivIncN=self.next.getAccuracy(xcs)#xcs.population.getById(self.next).getAccuracy(xcs)
             #accuracy+=xcs.population.getById(self.next).getAccuracy(xcs)
             #accDiv+=1
-        if self.prev==None or xcs.population.getById(self.prev) is None:
+        if self.prev==None :#or xcs.population.getById(self.prev) is None:
             pass
         else:
-            accIncP,accDivIncP=xcs.population.getById(self.prev).getAccuracy(xcs)
+            accIncP,accDivIncP=self.prev.getAccuracy(xcs)#xcs.population.getById(self.prev).getAccuracy(xcs)
             #accuracy+=xcs.population.getById(self.prev).getAccuracy(xcs)
             #accDiv+=1
 
@@ -378,12 +378,12 @@ class Classifier:
                 if nextState is not None:
                     selected=random.choice(xcs.population.selectTwoCorpCanidats(nextState,xcs))
                     #selected.prev=self.id
-                    self.next=selected.id
+                    self.next=selected#.id
                     xcs.population.corporationSet.collate(self.next,self.id)
             if self.prev==None and random.random() < 0.75:
                 pervState=xcs.env.getTrainState().prev
                 if pervState is not None:
                     selected=random.choice(xcs.population.selectTwoCorpCanidats(pervState,xcs))
                     #selected.next=self.id
-                    self.prev=selected.id
+                    self.prev=selected#.id
                     xcs.population.corporationSet.collate(self.prev,self.id)
