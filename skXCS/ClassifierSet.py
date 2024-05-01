@@ -141,9 +141,9 @@ class ClassifierSet:
                 for i in self.corporationSet.corp.get(self.popSet[ref].id):
                     cl=self.getById(i)
                     if cl is not None:
-                        if cl.next==self.popSet[ref].id:
+                        if cl.next==self.popSet[ref]:#.id:
                             cl.next=None
-                        if cl.prev==self.popSet[ref].id:
+                        if cl.prev==self.popSet[ref]:#.id:
                             cl.prev=None
         del self.popSet[ref]
 
